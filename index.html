@@ -596,6 +596,7 @@
       <div class="offer"><div class="tag">Affiliate slot</div><h4>Prop firm B</h4><p>One-phase, higher fee, looser daily-loss rule. Usually better for low-frequency traders.</p></div>
       <div class="offer"><div class="tag">Affiliate slot</div><h4>Data / backtesting</h4><p>Test before you pay anyone: honest backtesting needs real minute data and cost modeling.</p></div>
     </div>
+    <p>Every firm's rules differ: consistency rules, news restrictions, trailing vs. static drawdown. <a id="firmReportLink" href="#">Want your exact firm's rules simulated? Email us</a> — if enough people ask, we'll build firm-specific reports.</p>
   </div>
 </div>
 
@@ -649,6 +650,15 @@ const EASE_OUT = "cubic-bezier(0.16, 1, 0.3, 1)";
     "&body=" + encodeURIComponent("Subscribe me to the monthly Reality Check.");
   a.textContent = "Email “subscribe” to get it";
   form.replaceWith(a);
+})();
+
+/* ---------- firm-report demand signal (runtime-assembled, scraper-safe) ---------- */
+(function () {
+  const link = document.getElementById("firmReportLink");
+  if (!link) return;
+  link.href = "mailto:" + ["handoverknowledgecapture", "gmail.com"].join("@") +
+    "?subject=" + encodeURIComponent("Firm report request") +
+    "&body=" + encodeURIComponent("Firm name and the rules you want simulated: ");
 })();
 
 /* ---------- tabs ---------- */
