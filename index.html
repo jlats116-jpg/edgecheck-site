@@ -91,6 +91,8 @@
   .spacer { flex: 1; }
   .quip { font-size: 13px; color: var(--muted); letter-spacing: 0.02em; }
   @media (max-width: 560px) { .quip { display: none; } }
+  .navlink { font-size: 13.5px; }
+  .firmboard-link { font-size: 13.5px; color: var(--muted); margin: -6px 2px 18px; }
 
   /* ============ hero ============ */
   .hero {
@@ -341,6 +343,7 @@
   <div class="wrap">
     <div class="logo">Edge<span>Check</span><span class="tick">✓</span></div>
     <div class="spacer"></div>
+    <a class="hosted-only navlink" href="firms.html">Firm odds board</a>
     <div class="quip">No signals · no course · just the math</div>
   </div>
 </header>
@@ -474,6 +477,7 @@
         <div class="chart-wrap" id="p_outcomes"></div>
         <details class="tableview"><summary>View as table</summary><div id="p_outcomes_table"></div></details>
       </div>
+      <p class="hosted-only firmboard-link">Comparing firms? <a href="firms.html">See computed odds for FTMO, FundedNext, The5ers &amp; Topstep →</a></p>
     </div>
   </div>
 </section>
@@ -1145,6 +1149,27 @@ function tableView(id, headers, rows) {
     new IntersectionObserver(es => { onscreen = es[0].isIntersecting; onscreen ? start() : stop(); }).observe(cv);
   }
   boot();
+})();
+
+/* ---------- hosted-only links (firms.html doesn't exist in offline/artifact copies) ---------- */
+(function () {
+  const ok = ["github.io", "netlify.app"].some(h => location.hostname.endsWith(h));
+  if (!ok) document.querySelectorAll(".hosted-only").forEach(el => el.remove());
+})();
+
+/* ---------- URL prefill (used by firms.html "run with your stats" buttons) ---------- */
+(function () {
+  const q = new URLSearchParams(location.search);
+  if (![...q.keys()].length) return;
+  const map = { fee: "p_fee", phases: "p_phases", t1: "p_target1", t2: "p_target2",
+                daily: "p_daily", maxdd: "p_maxdd", days: "p_days",
+                wr: "p_wr", rr: "p_rr", risk: "p_risk", tpd: "p_tpd" };
+  let touched = false;
+  for (const k in map) {
+    if (q.has(k)) { P(map[k]).value = q.get(k); touched = true; }
+  }
+  if (touched) P("p_preset").value = "custom";
+  if (q.get("tool") === "cost") document.querySelector('.tab-btn[data-tab="cost"]').click();
 })();
 
 /* ---------- wire up ---------- */

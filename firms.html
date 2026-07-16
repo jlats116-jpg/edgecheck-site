@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0B211B">
+<title>Firm Odds Board — EdgeCheck</title>
+<meta name="description" content="The same trader, four prop firms' current rules, 20,000 simulations each: computed odds of getting funded at FTMO, FundedNext, The5ers and Topstep — and what the drawdown mechanic really costs you.">
+<link rel="canonical" href="https://jlats116-jpg.github.io/edgecheck-site/firms.html">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="EdgeCheck">
+<meta property="og:title" content="Firm Odds Board — the same trader, four prop firms, very different odds">
+<meta property="og:description" content="Computed funded odds at FTMO, FundedNext, The5ers and Topstep for the same trader. The drawdown mechanic matters more than the fee.">
+<meta property="og:url" content="https://jlats116-jpg.github.io/edgecheck-site/firms.html">
+<meta property="og:image" content="https://jlats116-jpg.github.io/edgecheck-site/og-image.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='10' fill='%230B211B'/%3E%3Cpath d='M14 34 L27 46 L50 18' fill='none' stroke='%23F6CE55' stroke-width='9' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&display=swap">
+<style>
+  :root {
+    color-scheme: dark;
+    --board: #0B211B; --board-2: #122B23; --board-3: #081A15;
+    --line: rgba(238,245,236,0.14); --line-strong: rgba(238,245,236,0.30);
+    --ink: #EEF5EC; --ink-2: #C7D8C9; --muted: #93AB99;
+    --chalk: #F6CE55; --chalk-deep: #E3B93C;
+    --good: #7EE0A6; --bad: #F4735E; --warn: #EDB05C;
+    --ease: cubic-bezier(0.16, 1, 0.3, 1);
+    --font-display: 'Big Shoulders Display', 'Arial Narrow', 'Segoe UI', system-ui, sans-serif;
+    --font-body: system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: var(--font-body); background: var(--board); color: var(--ink); line-height: 1.55; font-size: 16px; }
+  body::after {
+    content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 50;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)' opacity='0.55'/></svg>");
+    opacity: 0.05;
+  }
+  a { color: var(--chalk); }
+  ::selection { background: var(--chalk); color: var(--board); }
+  :focus-visible { outline: 2px solid var(--chalk); outline-offset: 2px; border-radius: 3px; }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 0 22px; }
+  header.site {
+    padding: 13px 0; border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 30;
+    background: color-mix(in srgb, var(--board) 90%, transparent); backdrop-filter: blur(10px);
+  }
+  header.site .wrap { display: flex; align-items: baseline; gap: 16px; }
+  .logo { font-family: var(--font-display); font-weight: 800; font-size: 24px; letter-spacing: 0.03em; text-transform: uppercase; }
+  .logo a { color: var(--ink); text-decoration: none; }
+  .logo .tick { color: var(--chalk); }
+  .spacer { flex: 1; }
+  .backlink { font-size: 13.5px; }
+
+  .hero { padding: 56px 0 8px; }
+  h1 {
+    font-family: var(--font-display); font-weight: 800; text-transform: uppercase;
+    font-size: clamp(38px, 6vw, 68px); line-height: 0.98; letter-spacing: 0.01em; text-wrap: balance;
+  }
+  h1 .y { color: var(--chalk); }
+  .sub { color: var(--ink-2); max-width: 640px; margin-top: 16px; text-wrap: pretty; }
+  .sub strong { color: var(--ink); }
+
+  .finding {
+    border: 2px solid var(--chalk); border-radius: 7px; padding: 16px 18px; margin: 30px 0 6px;
+    background: color-mix(in srgb, var(--chalk) 7%, var(--board-2)); transform: rotate(-0.4deg); max-width: 760px;
+  }
+  .finding .t { font-family: var(--font-display); font-weight: 700; font-size: 21px; text-transform: uppercase; color: var(--chalk); letter-spacing: 0.02em; }
+  .finding .b { font-size: 14.5px; color: var(--ink-2); margin-top: 5px; }
+
+  .board { margin: 36px 0 10px; overflow-x: auto; }
+  table.odds { border-collapse: collapse; width: 100%; min-width: 860px; }
+  table.odds th {
+    font-family: var(--font-display); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;
+    font-size: 14px; color: var(--muted); text-align: left; padding: 10px 14px; border-bottom: 2px solid var(--line-strong);
+  }
+  table.odds td { padding: 16px 14px; border-bottom: 1px solid var(--line); vertical-align: top; font-size: 14px; color: var(--ink-2); }
+  table.odds td:first-child { min-width: 150px; }
+  .firm { font-family: var(--font-display); font-weight: 700; font-size: 19px; text-transform: uppercase; letter-spacing: 0.02em; color: var(--ink); }
+  .firm-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .odds-v { font-family: var(--font-display); font-weight: 800; font-size: 34px; line-height: 1; color: var(--good); font-variant-numeric: tabular-nums; }
+  .odds-v.low { color: var(--warn); }
+  .att { font-family: var(--font-display); font-weight: 700; font-size: 24px; color: var(--ink); font-variant-numeric: tabular-nums; }
+  .runbtn {
+    display: inline-block; margin-top: 8px; padding: 7px 14px; border-radius: 6px; text-decoration: none;
+    font-family: var(--font-display); font-weight: 700; font-size: 14px; text-transform: uppercase; letter-spacing: 0.05em;
+    background: var(--chalk); color: var(--board); transition: background 130ms var(--ease);
+  }
+  .runbtn:hover { background: var(--chalk-deep); }
+  .site-link { font-size: 12.5px; }
+
+  .notes { max-width: 760px; padding: 26px 0 8px; }
+  .notes h2 { font-family: var(--font-display); font-weight: 700; font-size: clamp(24px, 3vw, 34px); text-transform: uppercase; letter-spacing: 0.02em; margin: 22px 0 10px; }
+  .notes p, .notes li { color: var(--ink-2); font-size: 14.5px; }
+  .notes ul { margin: 0 0 12px 22px; }
+  .notes li { margin-bottom: 7px; }
+  .notes strong { color: var(--ink); }
+  .notes .src { font-size: 12.5px; color: var(--muted); }
+
+  footer.site { border-top: 1px solid var(--line); padding: 30px 0 46px; margin-top: 44px; }
+  footer.site p { font-size: 12.5px; color: var(--muted); margin-bottom: 8px; max-width: 860px; }
+  footer.site strong { color: var(--ink-2); }
+  @media (prefers-reduced-motion: reduce) { * { transition-duration: 0.01ms !important; } }
+</style>
+</head>
+<body>
+
+<header class="site">
+  <div class="wrap">
+    <div class="logo"><a href="./">Edge<span>Check</span><span class="tick">✓</span></a></div>
+    <div class="spacer"></div>
+    <a class="backlink" href="./">← Back to the calculators</a>
+  </div>
+</header>
+
+<div class="hero wrap">
+  <h1>The firm odds board:<br><span class="y">same trader, four rulebooks.</span></h1>
+  <p class="sub">One simulated trader — <strong>45% win rate, 1.5:1 reward-to-risk, 1% risk per trade, 3 trades a day</strong> (a genuinely decent retail edge) — run through each firm's current evaluation rules, 20,000 seeded simulations per firm. Rules verified 2026-07-16; they change, so confirm with the firm before you pay.</p>
+
+  <div class="finding">
+    <div class="t">The drawdown mechanic matters more than the fee</div>
+    <div class="b">The same trader gets funded 76% of the time under FTMO's static 10% drawdown, but only 47% of the time under Topstep's 4% trailing drawdown. Before comparing prices, compare how the firm measures your losses.</div>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="board">
+    <table class="odds">
+      <thead>
+        <tr><th>Firm</th><th>Modeled rules</th><th>Funded odds*</th><th>Avg attempts</th><th>Fee model</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>
+            <div class="firm">FTMO</div>
+            <div class="firm-sub">2-Step Challenge</div>
+            <!-- AFFILIATE SLOT: swap to tracked link on approval -->
+            <div class="site-link"><a href="https://ftmo.com" rel="nofollow">ftmo.com</a></div>
+          </td>
+          <td>8% then 5% targets · 5% max daily loss · 10% static max loss · no time limit (min 4 trading days not modeled)</td>
+          <td><span class="odds-v">76.0%</span></td>
+          <td><span class="att">1.3</span></td>
+          <td>One-time, €89–€1,080 by size (~€155 standard for $10k); refunded with first payout.
+            <a class="runbtn" href="./?tool=prop&fee=170&phases=2&t1=8&t2=5&daily=5&maxdd=10&days=120">Run with your stats</a>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <div class="firm">FundedNext</div>
+            <div class="firm-sub">Stellar 2-Step</div>
+            <!-- AFFILIATE SLOT: swap to tracked link on approval -->
+            <div class="site-link"><a href="https://fundednext.com" rel="nofollow">fundednext.com</a></div>
+          </td>
+          <td>8% then 5% targets · 5% max daily loss · 10% overall max loss · no time limit (min 5 trading days not modeled)</td>
+          <td><span class="odds-v">76.0%</span></td>
+          <td><span class="att">1.3</span></td>
+          <td>One-time, from $59.99 ($6k) rising by size.
+            <a class="runbtn" href="./?tool=prop&fee=60&phases=2&t1=8&t2=5&daily=5&maxdd=10&days=120">Run with your stats</a>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <div class="firm">The5ers</div>
+            <div class="firm-sub">High Stakes 2-Step</div>
+            <!-- AFFILIATE SLOT: swap to tracked link on approval -->
+            <div class="site-link"><a href="https://the5ers.com" rel="nofollow">the5ers.com</a></div>
+          </td>
+          <td>10% then 5% targets · 5% max daily loss (from prior-day close) · 10% max loss from initial balance (3 profitable-day rule not modeled)</td>
+          <td><span class="odds-v">74.4%</span></td>
+          <td><span class="att">1.3</span></td>
+          <td>One-time: $39 ($5k), $165 ($20k), $300 ($60k), $495 ($100k).
+            <a class="runbtn" href="./?tool=prop&fee=165&phases=2&t1=10&t2=5&daily=5&maxdd=10&days=120">Run with your stats</a>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <div class="firm">Topstep</div>
+            <div class="firm-sub">$50K Trading Combine</div>
+            <!-- AFFILIATE SLOT: swap to tracked link on approval -->
+            <div class="site-link"><a href="https://topstep.com" rel="nofollow">topstep.com</a></div>
+          </td>
+          <td>6% target ($3,000) · 2% daily loss limit ($1,000, <strong>soft</strong>: pauses the day, doesn't fail you) · <strong>4% trailing</strong> max loss ($2,000 off the end-of-day high-water mark) · consistency rule (best day ≤ 50% of target) not modeled</td>
+          <td><span class="odds-v low">47.2%</span></td>
+          <td><span class="att">2.1</span></td>
+          <td>Subscription: $49/mo ($50k) while you attempt + $149 activation on passing. Cost scales with time, not attempts.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="src wrap" style="padding: 0; color: var(--muted); font-size: 12.5px;">*Probability the reference trader passes all phases of one purchased attempt. Seeded Monte Carlo, 10,000 runs per phase — reproduce it with your own numbers in <a href="./">the calculator</a>.</p>
+
+  <div class="notes">
+    <h2>What this board can't tell you</h2>
+    <ul>
+      <li><strong>Your win rate is the whole game.</strong> These odds assume a trader who genuinely has a 0.125R edge. At a 40% win rate (zero edge) the FTMO figure drops from 76% to ~31%, and the Topstep figure falls further. Run <a href="./">your own numbers</a> before reading any row as "easy".</li>
+      <li><strong>Un-modeled rules bite.</strong> Minimum trading days (FTMO 4, FundedNext 5), The5ers' three profitable-days requirement, and Topstep's consistency rule all reduce the odds above by a few points for fast traders. The Topstep browser preset isn't available yet because the site engine doesn't model trailing drawdown — the 47.2% comes from the extended engine in our repo.</li>
+      <li><strong>Passing isn't the finish line.</strong> Funded accounts have their own loss limits and payout rules, and a zero-edge trader who passes on variance gives it back later. Check payout track records, not just entry odds.</li>
+      <li><strong>Rules move.</strong> Everything here was verified against the firms' published rules and current review sites on 2026-07-16. Confirm on the firm's own site before paying.</li>
+    </ul>
+  </div>
+</div>
+
+<footer class="site">
+  <div class="wrap">
+    <p><strong>Trademarks.</strong> FTMO, FundedNext, The5ers and Topstep are trademarks of their respective owners. EdgeCheck is independent and unaffiliated; names are used only to identify the programs being analyzed.</p>
+    <p><strong>Not investment advice.</strong> EdgeCheck is an educational calculator. All figures are hypothetical simulations of published rules for a reference trader profile; your results depend on your inputs and execution. Hypothetical results have inherent limitations. Trading involves substantial risk of loss.</p>
+    <p><strong>Affiliate disclosure.</strong> Some links on this page may become affiliate links; commissions never change the computed odds. The math stays the same whether you click or not.</p>
+    <p>© 2026 EdgeCheck. Built by an independent developer, not by a prop firm.</p>
+  </div>
+</footer>
+
+</body>
+</html>
